@@ -4,12 +4,16 @@ import (
 	"encoding/json"
 	"math/rand"
 	"strings"
+	"sync"
 	"time"
 )
 
 // SEE https://stackoverflow.com/questions/22892120/how-to-generate-a-random-string-of-a-fixed-length-in-go
 
-var src = rand.NewSource(time.Now().UnixNano())
+// We use a pool as math/rand source are not thread safe
+var rndSrcPool = sync.Pool{
+	New: func() interface{} { return rand.NewSource(time.Now().UnixNano()) },
+}
 
 const letterBytes = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 const (
@@ -21,6 +25,10 @@ const (
 func RandString(n int) string {
 	sb := strings.Builder{}
 	sb.Grow(n)
+
+	src := rndSrcPool.Get().(rand.Source)
+	defer rndSrcPool.Put(src)
+
 	// A src.Int63() generates 63 random bits, enough for letterIdxMax characters!
 	for i, cache, remain := n-1, src.Int63(), letterIdxMax; i >= 0; {
 		if remain == 0 {
