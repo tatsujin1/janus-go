@@ -6,12 +6,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"strconv"
+	"os"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/rs/xid"
 )
 
 var debug = false
@@ -39,14 +39,19 @@ type Gateway struct {
 	// and Gateway.Unlock() methods provided by the embedded sync.Mutex.
 	sync.Mutex
 
-	conn            *websocket.Conn
-	nextTransaction uint64
-	transactions    map[uint64]chan interface{}
-
-	sendChan chan []byte
-	writeMu  sync.Mutex
+	conn             *websocket.Conn
+	transactions     map[xid.ID]chan interface{}
+	transactionsUsed map[xid.ID]bool
+	errors           chan error
+	sendChan         chan []byte
+	writeMu          sync.Mutex
 }
 
+func generateTransactionId() xid.ID {
+	return xid.New()
+}
+
+// Connect initiates a webscoket connection with the Janus Gateway
 func Connect(wsURL string) (*Gateway, error) {
 	websocket.DefaultDialer.Subprotocols = []string{"janus-protocol"}
 
@@ -58,10 +63,11 @@ func Connect(wsURL string) (*Gateway, error) {
 
 	gateway := new(Gateway)
 	gateway.conn = conn
-	gateway.transactions = make(map[uint64]chan interface{})
+	gateway.transactions = make(map[xid.ID]chan interface{})
+	gateway.transactionsUsed = make(map[xid.ID]bool)
 	gateway.Sessions = make(map[uint64]*Session)
-
 	gateway.sendChan = make(chan []byte, 100)
+	gateway.errors = make(chan error)
 
 	go gateway.ping()
 	go gateway.recv()
@@ -73,12 +79,18 @@ func (gateway *Gateway) Close() error {
 	return gateway.conn.Close()
 }
 
-func (gateway *Gateway) send(msg map[string]interface{}, transaction chan interface{}) {
-	id := atomic.AddUint64(&gateway.nextTransaction, 1)
+// GetErrChan returns a channels through which the caller can check and react to connectivity errors
+func (gateway *Gateway) GetErrChan() chan error {
+	return gateway.errors
+}
 
-	msg["transaction"] = strconv.FormatUint(id, 10)
+func (gateway *Gateway) send(msg map[string]interface{}, transaction chan interface{}) {
+	guid := generateTransactionId()
+
+	msg["transaction"] = guid.String()
 	gateway.Lock()
-	gateway.transactions[id] = transaction
+	gateway.transactions[guid] = transaction
+	gateway.transactionsUsed[guid] = false
 	gateway.Unlock()
 
 	if gateway.Token != "" {
@@ -96,7 +108,12 @@ func (gateway *Gateway) send(msg map[string]interface{}, transaction chan interf
 	gateway.writeMu.Unlock()
 
 	if err != nil {
-		fmt.Printf("conn.Write: %s\n", err)
+		select {
+		case gateway.errors <- err:
+		default:
+			fmt.Printf("conn.Write: %s\n", err)
+		}
+
 		return
 	}
 }
@@ -113,7 +130,12 @@ func (gateway *Gateway) ping() {
 		case <-ticker.C:
 			err := gateway.conn.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(20*time.Second))
 			if err != nil {
-				log.Println("ping:", err)
+				select {
+				case gateway.errors <- err:
+				default:
+					log.Println("ping:", err)
+				}
+
 				return
 			}
 		}
@@ -130,7 +152,12 @@ func (gateway *Gateway) recv() {
 		// Read message from Gateway
 		_, data, err := gateway.conn.ReadMessage()
 		if err != nil {
-			fmt.Printf("conn.Read: %s\n", err)
+			select {
+			case gateway.errors <- err:
+			default:
+				fmt.Printf("conn.Read: %s\n", err)
+			}
+
 			return
 		}
 
@@ -141,8 +168,17 @@ func (gateway *Gateway) recv() {
 			continue
 		}
 
+		var transactionUsed bool
+		if base.ID != "" {
+			id, _ := xid.FromString(base.ID)
+			gateway.Lock()
+			transactionUsed = gateway.transactionsUsed[id]
+			gateway.Unlock()
+
+		}
+
 		// Pass message on from here
-		if base.PluginData.Plugin != "" {
+		if base.PluginData.Plugin != "" || transactionUsed {
 			// Is this a Handle event?
 			if base.Handle == 0 {
 				// Error()
@@ -169,10 +205,14 @@ func (gateway *Gateway) recv() {
 				go passMsg(handle.Events, msg)
 			}
 		} else {
-			id, _ := strconv.ParseUint(base.ID, 10, 64)
+			id, _ := xid.FromString(base.ID)
 			// Lookup Transaction
 			gateway.Lock()
 			transaction := gateway.transactions[id]
+			switch msg.(type) {
+			case *EventMsg:
+				gateway.transactionsUsed[id] = true
+			}
 			gateway.Unlock()
 			if transaction == nil {
 				// Error()
@@ -346,7 +386,7 @@ func (handle *Handle) send(msg map[string]interface{}, transaction chan interfac
 	handle.session.send(msg, transaction)
 }
 
-// send sync request
+// Request sends a sync request
 func (handle *Handle) Request(body interface{}) (*SuccessMsg, error) {
 	req, ch := newRequest("message")
 	if body != nil {
