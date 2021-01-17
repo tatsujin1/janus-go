@@ -1,6 +1,8 @@
 package plugins
 
 import (
+	"github.com/rs/xid"
+
 	"github.com/edoshor/janus-go"
 )
 
@@ -45,7 +47,7 @@ func (f *TextroomRequestFactory) make(action string) TextroomRequest {
 			Action:   action,
 			AdminKey: f.AdminKey,
 		},
-		Transaction: janus.RandString(12),
+		Transaction: xid.New().String(),
 	}
 }
 

@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/edoshor/janus-go"
+	"github.com/rs/xid"
+
 	"github.com/edoshor/janus-go/plugins"
 )
 
@@ -85,7 +86,7 @@ func (api *DefaultAdminAPI) Close() error {
 func (api *DefaultAdminAPI) makeBaseRequest(action string) *BaseRequest {
 	return &BaseRequest{
 		Action:      action,
-		Transaction: janus.RandString(12),
+		Transaction: xid.New().String(),
 		Secret:      api.secret,
 	}
 }

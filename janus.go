@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"os"
 	"sync"
 	"time"
 
@@ -47,10 +46,6 @@ type Gateway struct {
 	writeMu          sync.Mutex
 }
 
-func generateTransactionId() xid.ID {
-	return xid.New()
-}
-
 // Connect initiates a webscoket connection with the Janus Gateway
 func Connect(wsURL string) (*Gateway, error) {
 	websocket.DefaultDialer.Subprotocols = []string{"janus-protocol"}
@@ -85,7 +80,7 @@ func (gateway *Gateway) GetErrChan() chan error {
 }
 
 func (gateway *Gateway) send(msg map[string]interface{}, transaction chan interface{}) {
-	guid := generateTransactionId()
+	guid := xid.New()
 
 	msg["transaction"] = guid.String()
 	gateway.Lock()
