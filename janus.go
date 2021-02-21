@@ -92,7 +92,7 @@ func (gateway *Gateway) send(msg map[string]interface{}, transaction chan interf
 
 	if len(gateway.ApiSecret) > 0 {
 		msg["apisecret"] = gateway.ApiSecret
-	} elif len(gateway.Token) > 0 {
+	} else if len(gateway.Token) > 0 {
 		msg["token"] = gateway.Token
 	}
 
