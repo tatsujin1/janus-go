@@ -30,6 +30,8 @@ type Gateway struct {
 	// Sessions is a map of the currently active sessions to the gateway.
 	Sessions map[uint64]*Session
 
+	ApiSecret string
+
 	// Stored token to use for authentication.
 	// See https://janus.conf.meetecho.com/docs/auth.html#token
 	Token string
@@ -88,7 +90,9 @@ func (gateway *Gateway) send(msg map[string]interface{}, transaction chan interf
 	gateway.transactionsUsed[guid] = false
 	gateway.Unlock()
 
-	if gateway.Token != "" {
+	if len(gateway.ApiSecret) > 0 {
+		msg["apisecret"] = gateway.ApiSecret
+	} elif len(gateway.Token) > 0 {
 		msg["token"] = gateway.Token
 	}
 
