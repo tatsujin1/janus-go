@@ -164,7 +164,7 @@ func (gateway *Gateway) recv() {
 			select {
 			case gateway.errors <- err:
 			default:
-				fmt.Printf("conn.Read: %s\n", err)
+				fmt.Fprintf(os.Stderr,"conn.Read: %s\n", err)
 			}
 
 			return
@@ -173,7 +173,7 @@ func (gateway *Gateway) recv() {
 		// parse message
 		base, msg, err := ParseMessage(data)
 		if err != nil {
-			fmt.Printf("parse error: %s\n", err)
+			fmt.Fprintf(os.Stderr,"parse error: %s\n", err)
 			continue
 		}
 
@@ -197,7 +197,7 @@ func (gateway *Gateway) recv() {
 				session := gateway.Sessions[base.Session]
 				gateway.Unlock()
 				if session == nil {
-					fmt.Printf("Unable to deliver message. Session gone?\n")
+					fmt.Fprintf(os.Stderr,"Unable to deliver message. Session gone?\n")
 					continue
 				}
 
@@ -206,7 +206,7 @@ func (gateway *Gateway) recv() {
 				handle := session.Handles[base.Handle]
 				session.Unlock()
 				if handle == nil {
-					fmt.Printf("Unable to deliver message. Handle gone?\n")
+					fmt.Fprintf(os.Stderr,"Unable to deliver message. Handle gone?\n")
 					continue
 				}
 
