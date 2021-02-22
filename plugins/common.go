@@ -24,7 +24,7 @@ func (r *BasePluginRequest) Payload() map[string]interface{} {
 	m := map[string]interface{}{
 		"request": r.ActionName(),
 	}
-	if r.AdminKey != "" {
+	if len(r.AdminKey) > 0 {
 		m["admin_key"] = r.AdminKey
 	}
 	return m
@@ -59,13 +59,13 @@ func (err *PluginError) Error() string {
 	return err.Reason
 }
 
-var TypeMap = map[string]map[string]func() interface{}{
-	"janus.plugin.audioroom": {
-		"error":   func() interface{} { return &AudioroomErrorResponse{} },
-		"list":    func() interface{} { return &AudioroomListResponse{} },
-		"create":  func() interface{} { return &AudioroomCreateResponse{} },
-		"edit":    func() interface{} { return &AudioroomEditResponse{} },
-		"destroy": func() interface{} { return &AudioroomDestroyResponse{} },
+var ResponseTypeMap = map[string]map[string]func() interface{}{
+	"janus.plugin.audiobridge": {
+		"error":   func() interface{} { return &AudiobridgeErrorResponse{} },
+		"list":    func() interface{} { return &AudiobridgeListResponse{} },
+		"create":  func() interface{} { return &AudiobridgeCreateResponse{} },
+		"edit":    func() interface{} { return &AudiobridgeEditResponse{} },
+		"destroy": func() interface{} { return &AudiobridgeDestroyResponse{} },
 	},
 	"janus.plugin.videoroom": {
 		"error":   func() interface{} { return &VideoroomErrorResponse{} },

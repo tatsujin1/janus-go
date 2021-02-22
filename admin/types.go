@@ -186,7 +186,7 @@ func ParseAMResponse(r APIRequest, data []byte) (interface{}, error) {
 	}
 
 	if mpRequest, ok := r.(*MessagePluginRequest); ok {
-		if pluginTypes, ok := plugins.TypeMap[mpRequest.Request.PluginName()]; ok {
+		if pluginTypes, ok := plugins.ResponseTypeMap[mpRequest.Request.PluginName()]; ok {
 			actionName := mpRequest.Request.ActionName()
 			innerPayload := resp.(*MessagePluginResponse).Response
 			if _, ok := innerPayload["error"]; ok {
