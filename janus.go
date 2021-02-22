@@ -5,7 +5,7 @@ package janus
 import (
 	"encoding/json"
 	"fmt"
-	"log"
+	"net"
 	"os"
 	"sync"
 	"time"
@@ -142,9 +142,8 @@ func (gateway *Gateway) ping() {
 				select {
 				case gateway.errors <- err:
 				default:
-					log.Println("ping:", err)
+					fmt.Fprintf(os.Stderr, "janus ping error: %v\n", err)
 				}
-
 				return
 			}
 		}
