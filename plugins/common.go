@@ -60,6 +60,13 @@ func (err *PluginError) Error() string {
 }
 
 var TypeMap = map[string]map[string]func() interface{}{
+	"janus.plugin.audioroom": {
+		"error":   func() interface{} { return &AudioroomErrorResponse{} },
+		"list":    func() interface{} { return &AudioroomListResponse{} },
+		"create":  func() interface{} { return &AudioroomCreateResponse{} },
+		"edit":    func() interface{} { return &AudioroomEditResponse{} },
+		"destroy": func() interface{} { return &AudioroomDestroyResponse{} },
+	},
 	"janus.plugin.videoroom": {
 		"error":   func() interface{} { return &VideoroomErrorResponse{} },
 		"list":    func() interface{} { return &VideoroomListResponse{} },
