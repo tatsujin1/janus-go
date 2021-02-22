@@ -45,7 +45,7 @@ type Gateway struct {
 	transactions     map[xid.ID]chan interface{}
 	transactionsUsed map[xid.ID]bool
 	errors           chan error
-	shutdown         chan bool
+	shutdown         chan struct{}
 	sendChan         chan []byte
 	writeMu          sync.Mutex
 }
@@ -67,7 +67,7 @@ func Connect(wsURL string) (*Gateway, error) {
 	gateway.Sessions = make(map[uint64]*Session)
 	gateway.sendChan = make(chan []byte, 100)
 	gateway.errors = make(chan error)
-	gateway.shutdown = make(chan bool)
+	gateway.shutdown = make(chan struct{})
 
 	go gateway.ping()
 	go gateway.recv()
@@ -76,7 +76,7 @@ func Connect(wsURL string) (*Gateway, error) {
 
 // Close closes the underlying connection to the Gateway.
 func (gateway *Gateway) Close() error {
-	gateway.shutdown <- false
+	gateway.shutdown <- struct{}{}
 	return gateway.conn.Close()
 }
 
