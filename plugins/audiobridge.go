@@ -166,11 +166,6 @@ type AudiobridgeRoomForEdit struct {
 	IsPrivate    bool   `json:"new_is_private"`
 	Secret       string `json:"new_secret,omitempty"`
 	Pin          string `json:"new_pin,omitempty"`
-	RequirePvtID bool   `json:"new_require_pvtid"`
-	Publishers   int    `json:"new_publishers"`
-	Bitrate      int    `json:"new_bitrate"`
-	FirFreq      int    `json:"new_fir_freq"`
-	LockRecord   bool   `json:"new_lock_record"`
 }
 
 func (r *AudiobridgeRoomForEdit) AsMap() map[string]interface{} {
