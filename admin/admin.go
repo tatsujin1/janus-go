@@ -6,7 +6,7 @@ import (
 
 	"github.com/rs/xid"
 
-	"github.com/edoshor/janus-go/plugins"
+	"github.com/tatsujin1/janus-go/plugins"
 )
 
 type AdminAPI interface {

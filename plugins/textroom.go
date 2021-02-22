@@ -3,7 +3,7 @@ package plugins
 import (
 	"github.com/rs/xid"
 
-	"github.com/edoshor/janus-go"
+	"github.com/tatsujin1/janus-go"
 )
 
 type TextroomRequest struct {

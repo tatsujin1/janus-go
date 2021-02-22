@@ -1,7 +1,7 @@
 package plugins
 
 import (
-	"github.com/edoshor/janus-go"
+	"github.com/tatsujin1/janus-go"
 )
 
 type VideoroomResponse struct {
