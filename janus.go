@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 	"sync"
 	"time"
 
@@ -98,7 +99,11 @@ func (gateway *Gateway) send(msg map[string]interface{}, transaction chan interf
 
 	data, err := json.Marshal(msg)
 	if err != nil {
-		fmt.Printf("json.Marshal: %s\n", err)
+		select {
+		case gateway.errors <- err:
+		default:
+			fmt.Fprintf(os.Stderr, "json.Marshal: %s\n", err)
+		}
 		return
 	}
 
@@ -110,7 +115,7 @@ func (gateway *Gateway) send(msg map[string]interface{}, transaction chan interf
 		select {
 		case gateway.errors <- err:
 		default:
-			fmt.Printf("conn.Write: %s\n", err)
+			fmt.Fprintf(os.Stderr, "conn.Write: %s\n", err)
 		}
 
 		return
