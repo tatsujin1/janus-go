@@ -160,6 +160,12 @@ func (gateway *Gateway) recv() {
 		// Read message from Gateway
 		_, data, err := gateway.conn.ReadMessage()
 		if err != nil {
+			if operr, ok := err.(*net.OpError); ok {
+				if !operr.Temporary() {
+					return
+				}
+			}
+			fmt.Fprintf(os.Stderr, "janus read error: %v\n", err)
 			select {
 			case gateway.errors <- err:
 			default:
@@ -402,13 +408,13 @@ func (handle *Handle) Request(body interface{}) (*SuccessMsg, error) {
 	}
 	handle.send(req, ch)
 
-	msg := <-ch
+	response := <-handle.Events //ch
 
-	switch msg := msg.(type) {
+	switch response := response.(type) {
 	case *SuccessMsg:
-		return msg, nil
+		return response, nil
 	case *ErrorMsg:
-		return nil, msg
+		return nil, response
 	}
 
 	return nil, unexpected("message")
