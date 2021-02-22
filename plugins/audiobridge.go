@@ -132,23 +132,19 @@ type AudiobridgeDestroyResponse struct {
 }
 
 type AudiobridgeRoom struct {
-	Room               int    `json:"room"`
-	Description        string `json:"description,omitempty"`
-	IsPrivate          bool   `json:"is_private"`
-	Secret             string `json:"secret,omitempty"`
-	Pin                string `json:"pin,omitempty"`
-	SamplingRate       int    `json:"sampling_rate"`
-	AudioCodec         string `json:"audiocodec,omitempty"`
-	OpusFec            bool   `json:"opus_fec"`
-	AudioLevelExt      bool   `json:"audiolevel_ext"`
-	AudioLevelEvent    bool   `json:"audiolevel_event"`
-	AudioActivePackets int    `json:"audio_active_packets,omitempty"`
-	AudioLevelAverage  int    `json:"audio_level_average,omitempty"`
-	DefaultPrebuffering int   `json:"default_prebuffering"`
-	Record             bool   `json:"record"`
-	RecDir             string `json:"rec_dir,omitempty"`
-	LockRecord         bool   `json:"lock_record"`
-	NotifyJoining      bool   `json:"notify_joining"`
+	Room                int    `json:"room"`
+	Description         string `json:"description,omitempty"`
+	IsPrivate           bool   `json:"is_private"`
+	Secret              string `json:"secret,omitempty"`
+	Pin                 string `json:"pin,omitempty"`
+	SamplingRate        int    `json:"sampling_rate"`
+	AudioLevelExt       bool   `json:"audiolevel_ext"`
+	AudioLevelEvent     bool   `json:"audiolevel_event"`
+	AudioActivePackets  int    `json:"audio_active_packets,omitempty"`
+	AudioLevelAverage   int    `json:"audio_level_average,omitempty"`
+	DefaultPrebuffering int    `json:"default_prebuffering"`
+	Record              bool   `json:"record"`
+	RecordFile          string `json:"record_file,omitempty"`
 }
 
 func (r *AudiobridgeRoom) AsMap() map[string]interface{} {
