@@ -79,6 +79,7 @@ type InfoMsg struct {
 	Version       int
 	VersionString string `json:"version_string"`
 	Author        string
+	ServerName    string `json:"server-name"`
 	DataChannels  bool   `json:"data_channels"`
 	IPv6          bool   `json:"ipv6"`
 	LocalIP       string `json:"local-ip"`
