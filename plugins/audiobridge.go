@@ -5,7 +5,7 @@ import (
 )
 
 type AudiobridgeResponse struct {
-	Audiobridge string `json:"Audiobridge"`
+	Audiobridge string `json:"audiobridge"`
 }
 
 type AudiobridgeErrorResponse struct {
@@ -23,7 +23,7 @@ type AudiobridgeRequestFactory struct {
 
 func MakeAudiobridgeRequestFactory(adminKey string) *AudiobridgeRequestFactory {
 	return &AudiobridgeRequestFactory{
-		PluginRequestFactory: *NewPluginRequestFactory("janus.plugin.Audiobridge", adminKey),
+		PluginRequestFactory: *NewPluginRequestFactory("janus.plugin.audiobridge", adminKey),
 	}
 }
 
