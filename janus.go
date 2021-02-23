@@ -77,6 +77,8 @@ func Connect(wsURL string) (*Gateway, error) {
 // Close closes the underlying connection to the Gateway.
 func (gateway *Gateway) Close() error {
 	gateway.shutdown <- struct{}{}
+	close(gateway.errors)
+	close(gateway.shutdown)
 	return gateway.conn.Close()
 }
 
