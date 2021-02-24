@@ -45,7 +45,7 @@ type Gateway struct {
 	transactions     map[xid.ID]chan interface{}
 	transactionsUsed map[xid.ID]bool
 	errors           chan error
-	shutdown         chan struct{}
+	shutdown         bool
 	sendChan         chan []byte
 	writeMu          sync.Mutex
 }
@@ -67,7 +67,7 @@ func Connect(wsURL string) (*Gateway, error) {
 	gateway.Sessions = make(map[uint64]*Session)
 	gateway.sendChan = make(chan []byte, 100)
 	gateway.errors = make(chan error)
-	gateway.shutdown = make(chan struct{})
+	gateway.shutdown = false
 
 	go gateway.ping()
 	go gateway.recv()
@@ -76,9 +76,7 @@ func Connect(wsURL string) (*Gateway, error) {
 
 // Close closes the underlying connection to the Gateway.
 func (gateway *Gateway) Close() error {
-	gateway.shutdown <- struct{}{}
-	close(gateway.errors)
-	close(gateway.shutdown)
+	gateway.shutdown = true
 	return gateway.conn.Close()
 }
 
@@ -117,6 +115,9 @@ func (gateway *Gateway) send(msg map[string]interface{}, transaction chan interf
 	gateway.writeMu.Unlock()
 
 	if err != nil {
+		if gateway.shutdown {
+			return
+		}
 		select {
 		case gateway.errors <- err:
 		default:
@@ -136,9 +137,10 @@ func (gateway *Gateway) ping() {
 	defer ticker.Stop()
 	for {
 		select {
-		case <-gateway.shutdown:
-			return
 		case <-ticker.C:
+			if gateway.shutdown {
+				return
+			}
 			err := gateway.conn.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(20*time.Second))
 			if err != nil {
 				select {
@@ -162,12 +164,15 @@ func (gateway *Gateway) recv() {
 		// Read message from Gateway
 		_, data, err := gateway.conn.ReadMessage()
 		if err != nil {
+			if gateway.shutdown {
+				return
+			}
 			if operr, ok := err.(*net.OpError); ok {
 				if !operr.Temporary() {
 					return
 				}
 			}
-			fmt.Fprintf(os.Stderr, "janus read error: %v\n", err)
+			fmt.Fprintf(os.Stderr, "janus read error: %v [%T]\n", err, err)
 			select {
 			case gateway.errors <- err:
 			default:
